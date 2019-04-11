@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<style type="text/css" media="screen, print">
+			body { margin: 30px 50px; font-family: sans-serif; }
+			.dead  { opacity: .25; }
+			.alive { opacity: 1.; fill-opacity:.01; stroke: black; }
+		</style>
+		<title>Titanic</title>
+	</head>
+	<body>
+		<h1>Titanic</h1>
+
+		<script src="../vendor/d3/d3.js"></script>
+		<script>
+
+		var body = d3.select("body");
+
+		var margin={top:20,right:10,bottom:20,left:10};
+		var width= 960 - margin.left - margin.right;
+		var height= 500 - margin.top - margin.bottom;
+
+		var xAxis = d3.axisBottom;
+		var yAxis = d3.axisLeft;
+
+		var svg = body.append("svg")
+			.attr("width", width+margin.left+margin.right)
+			.attr("height", height+margin.top+margin.bottom)
+			.append("g")
+			.attr("transform","translate("+margin.left+","+margin.top+")");
+
+		var x = d3.scaleLinear().range([0,width]);
+		var y = d3.scaleLog().range([height,0]);
+
+		d3.tsv("../data/titanic.tsv", function(error, data) {
+			if(error) throw error;
+
+			x.domain([0,d3.max(data, function(d){return +d.age;})]).nice();
+			y.domain([1,d3.max(data, function(d){return +d.fare;})]).nice();
+
+			var gs = svg.selectAll("g").data(data).enter()
+				.filter(function(d,i){ return d.age != "nan" && d.fare != "nan";})
+				.append("g")
+				.attr("transform", function(d,i){return "translate("+x(+d.age)+","+y(+d.fare)+")";})
+				.attr("class",function(d,i){
+					if(d.survived == 0){
+						return "dead";
+					}else{
+						return "alive";
+					}
+				});
+			gs.filter(function(d,i){ return d.sex=="male";})
+				.append('rect')
+				.attr("width","5")
+				.attr("height","5")
+				.attr("x","-2.5")
+				.attr("y","-2.5");
+
+			gs.filter(function(d,i){ return d.sex=="female";})
+				.append('circle')
+				.attr("r","2.8");
+
+			body.selectAll('div')
+				.data(data)
+				.enter()
+				.append('div')
+			  .text(function(d, i) {
+			    	var t = i + ". " + d.name;
+			    	t = t + " ("+d.age+")";
+			    	return t;
+			    })
+
+		});
+
+		</script>
+	</body>
+</html>
