@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<style type="text/css" media="screen, print">
+			body { margin: 30px 50px; font-family: sans-serif; }
+			.item{ fill-opacity:.01;}
+		</style>
+		<title>Cars</title>
+	</head>
+	<body>
+		<h1>Cars</h1>
+
+		<script src="../vendor/d3/d3.js"></script>
+		<script src="../vendor/d3/d3-scale-chromatic.v1.min.js"></script>
+		<script>
+		var body = d3.select("body");
+
+		var margin={top:20,right:40,bottom:20,left:40};
+		var legWidth = 100;
+		var width= 960 - margin.left - margin.right;
+		var height= 500 - margin.top - margin.bottom;
+		var x = d3.scaleLinear().range([0,width]);
+		var y = d3.scaleLinear().range([height,0]);
+
+
+		var svg = body.append("svg")
+			.attr("width", width+margin.left+margin.right+legWidth)
+			.attr("height", height+margin.top+margin.bottom)
+			.append("g")
+			.attr("transform","translate("+margin.left+","+margin.top+")");
+
+		var color = d3.scaleSequential(d3.interpolateBlues);
+		var xAxis = d3.axisBottom(x);
+		var yAxis = d3.axisLeft(y);
+
+		d3.tsv("../data/cars.tsv", function(error, data) {
+			if(error) throw error;
+
+			x.domain([d3.min(data, function(d){return +d.weight;}),
+				d3.max(data, function(d){return +d.weight;})]).nice();
+
+			y.domain([d3.min(data, function(d){return +d.mpg;}),
+				d3.max(data, function(d){return +d.mpg;})]).nice();
+
+			color.domain([d3.min(data, function(d){return +d.year;}),
+				d3.max(data, function(d){return +d.year;})]).nice();
+
+			var gs = svg.selectAll("g").data(data).enter()
+				.append("g")
+				.attr("transform", function(d,i){return "translate("+x(+d.weight)+","+y(+d.mpg)+")";})
+				.attr("class","item")
+				.attr("stroke", function(d){
+					return color(d.year);
+				});
+			gs.filter(function(d,i){ return d.origin == "Europe";})
+				.append('circle')
+				.attr("r","3");
+			gs.filter(function(d,i){ return d.origin == "Japan";})
+				.append('rect')
+				.attr("width","6")
+				.attr("height","6")
+				.attr("x","-3")
+				.attr("y","-3");
+			gs.filter(function(d,i){ return d.origin == "USA";})
+				.append('path')
+				.attr("d","M -4,0 L 4,0 M 0,-4 L 0,4");
+
+
+			svg.append("g")
+				.call(xAxis)
+				.attr("transform","translate(0,"+height+")");
+			svg.append("g")
+				.call(yAxis);
+		});
+		</script>
+	</body>
+</html>
